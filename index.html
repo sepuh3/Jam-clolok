@@ -1,31 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Jam Digital</title>
+  <meta charset="UTF-8">
+  <title>Jam Clolok</title>
   <style>
     body {
-      background: black;
+      background-color: black;
       color: lime;
       font-family: monospace;
-      font-size: 4em;
       text-align: center;
-      margin-top: 20%;
+      padding-top: 50px;
+    }
+    #clock {
+      font-size: 80px;
+      margin-bottom: 30px;
+    }
+    input, button {
+      font-size: 20px;
+      padding: 10px;
+      margin: 10px;
+    }
+    .record {
+      margin-top: 30px;
+      text-align: left;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
-  <div id="jam">00:00:00</div>
+
+  <div id="clock">00:00:00</div>
+
+  <input type="text" id="nameInput" placeholder="Masukkan nama kamu">
+  <button onclick="cekTerlambat()">Cek Masuk</button>
+
+  <div class="record">
+    <h3>Daftar Terlambat:</h3>
+    <ul id="terlambatList"></ul>
+  </div>
 
   <script>
-    function updateJam() {
-      const sekarang = new Date();
-      const jam = String(sekarang.getHours()).padStart(2, '0');
-      const menit = String(sekarang.getMinutes()).padStart(2, '0');
-      const detik = String(sekarang.getSeconds()).padStart(2, '0');
-      document.getElementById('jam').textContent = `${jam}:${menit}:${detik}`;
+    function updateClock() {
+      const now = new Date();
+      const jam = String(now.getHours()).padStart(2, '0');
+      const menit = String(now.getMinutes()).padStart(2, '0');
+      const detik = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${jam}:${menit}:${detik}`;
     }
-    setInterval(updateJam, 1000);
-    updateJam();
+    setInterval(updateClock, 1000);
+
+    function cekTerlambat() {
+      const nama = document.getElementById('nameInput').value.trim();
+      if (!nama) return alert("Isi namanya dulu woy!");
+
+      const now = new Date();
+      const totalDetik = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const batasTerlambat = 7 * 3600; // Jam 07:00:00
+
+      if (totalDetik > batasTerlambat) {
+        const jam = now.toTimeString().split(' ')[0];
+        const data = { nama, waktu: jam };
+        let semua = JSON.parse(localStorage.getItem('terlambat') || '[]');
+        semua.push(data);
+        localStorage.setItem('terlambat', JSON.stringify(semua));
+        tampilkanTerlambat();
+        alert("Terlambat woy!");
+      } else {
+        alert("Aman bro, masih pagi");
+      }
+    }
+
+    function tampilkanTerlambat() {
+      const data = JSON.parse(localStorage.getItem('terlambat') || '[]');
+      const list = document.getElementById('terlambatList');
+      list.innerHTML = '';
+      data.forEach((d, i) => {
+        const li = document.createElement('li');
+        li.textContent = `${i + 1}. ${d.nama} - ${d.waktu}`;
+        list.appendChild(li);
+      });
+    }
+
+    tampilkanTerlambat();
   </script>
+
 </body>
-</html>
+  </html>
