@@ -1,113 +1,114 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manusia Mati Simulator</title>
   <style>
-    body {
-      background: #000;
-      color: white;
-      font-family: sans-serif;
-      text-align: center;
-    }
     canvas {
+      background: #000;
       display: block;
-      margin: 20px auto;
-      background: #111;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
-  <h1>Manusia Mati Simulator</h1>
-  <p>Merah = Terinfeksi, Abu = Mati, Hijau = Sehat</p>
-  <canvas id="simulator" width="600" height="400"></canvas>
+  <canvas id="canvas" width="600" height="400"></canvas>
   <script>
-    const canvas = document.getElementById("simulator");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");const jumlahOrang = 100;
+const radius = 5;
+const jarakInfeksi = 10;
+const chanceInfeksi = 0.1;
+const chanceMati = 0.01; // dikurangi biar gak cepat mati
+const waktuInfeksi = 600; // ditambah supaya bisa nyebar dulu
 
-    const jumlahOrang = 100;
-    const radius = 5;
-    const jarakInfeksi = 10;
-    const chanceInfeksi = 0.1;
-    const chanceMati = 0.05;
-    const waktuInfeksi = 500;
-    let orang = [];
+let orang = [];
 
-    function buatOrang() {
-      return {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        status: "sehat", // sehat, infeksi, mati
-        timer: 0
-      };
+class Manusia {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = (Math.random() - 0.5) * 2;
+    this.status = "sehat"; // sehat, infeksi, mati, sembuh
+    this.timerInfeksi = 0;
+  }
+
+  update() {
+    if (this.status !== "mati") {
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
     }
 
-    function resetSimulasi() {
-      orang = [];
-      for (let i = 0; i < jumlahOrang; i++) {
-        orang.push(buatOrang());
+    if (this.status === "infeksi") {
+      this.timerInfeksi++;
+
+      if (Math.random() < chanceMati) {
+        this.status = "mati";
+      } else if (this.timerInfeksi > waktuInfeksi) {
+        this.status = "sembuh";
       }
-      // 1 orang pertama terinfeksi
-      orang[0].status = "infeksi";
     }
+  }
 
-    function update() {
-      for (let o of orang) {
-        if (o.status === "mati") continue;
-        o.x += o.vx;
-        o.y += o.vy;
+  draw() {
+    if (this.status === "sehat") ctx.fillStyle = "white";
+    if (this.status === "infeksi") ctx.fillStyle = "red";
+    if (this.status === "mati") ctx.fillStyle = "gray";
+    if (this.status === "sembuh") ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
 
-        if (o.x < 0 || o.x > canvas.width) o.vx *= -1;
-        if (o.y < 0 || o.y > canvas.height) o.vy *= -1;
+for (let i = 0; i < jumlahOrang; i++) {
+  let x = Math.random() * canvas.width;
+  let y = Math.random() * canvas.height;
+  let m = new Manusia(x, y);
+  orang.push(m);
+}
 
-        if (o.status === "infeksi") {
-          o.timer++;
-          if (Math.random() < chanceMati) {
-            o.status = "mati";
-          } else if (o.timer > waktuInfeksi) {
-            o.status = "sehat"; // recovery
-            o.timer = 0;
+// Awal ada 1 yang kena infeksi
+orang[0].status = "infeksi";
+
+function update() {
+  for (let i = 0; i < orang.length; i++) {
+    orang[i].update();
+
+    if (orang[i].status === "infeksi") {
+      for (let j = 0; j < orang.length; j++) {
+        if (orang[j].status === "sehat") {
+          let dx = orang[i].x - orang[j].x;
+          let dy = orang[i].y - orang[j].y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < jarakInfeksi && Math.random() < chanceInfeksi) {
+            orang[j].status = "infeksi";
           }
         }
-
-        for (let target of orang) {
-          if (target === o || target.status !== "sehat") continue;
-          let dx = o.x - target.x;
-          let dy = o.y - target.y;
-          let jarak = Math.sqrt(dx * dx + dy * dy);
-          if (jarak < jarakInfeksi && o.status === "infeksi") {
-            if (Math.random() < chanceInfeksi) {
-              target.status = "infeksi";
-              target.timer = 0;
-            }
-          }
-        }
       }
     }
+  }
+}
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let o of orang) {
-        if (o.status === "sehat") ctx.fillStyle = "lime";
-        else if (o.status === "infeksi") ctx.fillStyle = "red";
-        else ctx.fillStyle = "gray";
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let m of orang) {
+    m.draw();
+  }
+}
 
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 
-    function loop() {
-      update();
-      draw();
-      requestAnimationFrame(loop);
-    }
+loop();
 
-    resetSimulasi();
-    loop();
   </script>
 </body>
 </html>
