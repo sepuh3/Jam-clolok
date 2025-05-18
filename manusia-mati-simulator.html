@@ -15,12 +15,12 @@
   <canvas id="canvas" width="600" height="400"></canvas>
   <script>
     const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");const jumlahOrang = 100;
+    const ctx = canvas.getContext("2d");const jumlahOrang = 200;
 const radius = 5;
-const jarakInfeksi = 10;
+const jarakInfeksi = 30;
 const chanceInfeksi = 0.1;
 const chanceMati = 0.01; // dikurangi biar gak cepat mati
-const waktuInfeksi = 600; // ditambah supaya bisa nyebar dulu
+const waktuInfeksi = 1000; // ditambah supaya bisa nyebar dulu
 
 let orang = [];
 
